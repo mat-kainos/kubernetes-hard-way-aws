@@ -7,12 +7,14 @@ Kubernetes The Hard Way is optimized for learning, which means taking the long r
 > The results of this tutorial should not be viewed as production ready, and may receive limited support from the community, but don't let that stop you from learning!
 
 ## Note
-This guide is based on [original Kubernetes The Hard Way guide](https://github.com/kelseyhightower/kubernetes-the-hard-way) which leverage Google Cloud Platform.
+This guide is based on 
+[updated and revised version Kubernetes The Hard Way guide AWS](https://github.com/michalschott/kubernetes-hard-way-aws) which is based on
+[original Kubernetes The Hard Way guide](https://github.com/kelseyhightower/kubernetes-the-hard-way) which leverage Google Cloud Platform.
 
 The main differences are:
 * AWS instead of GCP
 * docker instead of container-d
-* kubernetes 1.9.7 instead of 1.9.0
+* kubernetes 1.14.2 instead of 1.9.7
 * one master and one worker, no load balancers
 
 ## Target Audience
@@ -23,10 +25,10 @@ The target audience for this tutorial is someone planning to support a productio
 
 Kubernetes The Hard Way guides you through bootstrapping a highly available Kubernetes cluster with end-to-end encryption between components and RBAC authentication. Because not everyone have publicly available domain, we will build GOSSIP-only cluster.
 
-* [Kubernetes](https://github.com/kubernetes/kubernetes) 1.9.7
-* [Docker Runtime](https://docker.com) 18.03.1-ce
-* [CNI Container Networking](https://github.com/containernetworking/cni) 0.6.0
-* [etcd](https://github.com/coreos/etcd) 3.3.4
+* [Kubernetes](https://github.com/kubernetes/kubernetes) 1.14.2
+* [Docker Runtime](https://docker.com) TBD
+* [CNI Container Networking](https://github.com/containernetworking/cni) TBD
+* [etcd](https://github.com/coreos/etcd) TBD
 
 ## Labs
 
