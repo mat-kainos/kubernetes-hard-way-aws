@@ -2,11 +2,19 @@
 
 Kubernetes requires a set of machines to host the Kubernetes control plane and the worker nodes where containers are ultimately run. In this lab you will provision the compute resources required for running a simple Kubernetes cluster across a single compute zone.
 
+## Preparation
+
+TODO: Setup `terraform`
+
 ## Networking
 
 The Kubernetes [networking model](https://kubernetes.io/docs/concepts/cluster-administration/networking/#kubernetes-model) assumes a flat network in which containers and nodes can communicate with each other. In cases where this is not desired [network policies](https://kubernetes.io/docs/concepts/services-networking/network-policies/) can limit how groups of containers are allowed to communicate with each other and external network endpoints.
 
 > Setting up network policies is out of scope for this tutorial.
+
+## Deploy cloud environment
+
+TODO: explain terraform
 
 ### Virtual Private Cloud Network
 

@@ -16,6 +16,7 @@ The main differences are:
 * docker instead of container-d
 * kubernetes 1.14.2 instead of 1.9.7
 * one master and one worker, no load balancers
+* use of Terraform instead of CLI
 
 ## Target Audience
 

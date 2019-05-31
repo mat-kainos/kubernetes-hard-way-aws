@@ -53,6 +53,41 @@ Runtime: go1.6
 
 > The cfssljson command line utility does not provide a way to print its version.
 
+## Install Terraform 0.12
+`terraform` command line utility: TODO description 
+
+### OS X
+
+```
+wget https://releases.hashicorp.com/terraform/0.12.0/terraform_0.12.0_darwin_amd64.zip -O terraform12.zip; \
+unzip terraform12.zip; \
+mv terraform /usr/local/bin/; \
+rm -f terraform12.zip
+```
+
+### Linux
+
+```
+wget https://releases.hashicorp.com/terraform/0.12.0/terraform_0.12.0_linux_amd64.zip -O terraform12.zip; \
+unzip terraform12.zip; \
+mv terraform /usr/local/bin/; \
+rm -f terraform12.zip
+```
+
+### Verification
+
+Verify `Terraform` version 0.12 is installed:
+
+```
+terraform version
+```
+
+> output
+
+```
+Terraform v0.12.0
+```
+
 ## Install kubectl
 
 The `kubectl` command line utility is used to interact with the Kubernetes API Server. Download and install `kubectl` from the official release binaries:
