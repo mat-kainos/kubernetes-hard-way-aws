@@ -12,8 +12,8 @@ resource "aws_key_pair" "generated_key" {
 
 resource "local_file" "private_key_ec2" {
     content     = tls_private_key.ssh_ec2_key.private_key_pem
-    filename = "${path.module}/ssh_ec2_key.pem"
+    filename = "${path.module}/${var.private_key_file_name}"
     provisioner "local-exec" {
-        command = "chmod 700 ${path.module}/ssh_ec2_key.pem"
+        command = "chmod 700 ${path.module}/${var.private_key_file_name}"
     }
 }
