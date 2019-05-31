@@ -2,6 +2,8 @@ terraform {
   required_version = "0.12.0"
 }
 
-provider "aws" {
+provider aws {
   region = "eu-west-1"
 }
+
+provider http {}

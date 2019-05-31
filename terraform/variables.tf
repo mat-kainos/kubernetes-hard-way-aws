@@ -1,13 +1,16 @@
 
 
-variable "environment" {
+variable environment {
   default = "Lab"
 }
 
-variable "tag_name" {
+variable external_ip_check_url {
+  default = "http://ipv4.icanhazip.com"
+}
+variable tag_name {
   default = "kubernetes-the-hard-way"
 }
-variable "network" {
+variable network {
   description = "All network related variables"
 
   default = {

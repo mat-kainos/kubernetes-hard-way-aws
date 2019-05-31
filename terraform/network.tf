@@ -1,4 +1,4 @@
-resource "aws_vpc" "vpc" {
+resource aws_vpc vpc {
   cidr_block           = var.network["vpc_cidr_block"]
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -11,7 +11,7 @@ resource "aws_vpc" "vpc" {
   }
 }
 
-resource "aws_internet_gateway" "ig" {
+resource aws_internet_gateway ig {
   vpc_id = aws_vpc.vpc.id
 
   tags = {
@@ -21,7 +21,7 @@ resource "aws_internet_gateway" "ig" {
   }
 }
 
-resource "aws_subnet" "subnet" {
+resource aws_subnet subnet {
   vpc_id     = aws_vpc.vpc.id
   cidr_block = var.network["subnet_cidr_block"]
 
@@ -31,7 +31,7 @@ resource "aws_subnet" "subnet" {
   }
 }
 
-resource "aws_route_table" "route_table" {
+resource aws_route_table route_table {
   vpc_id = aws_vpc.vpc.id
 
   route {
@@ -45,7 +45,7 @@ resource "aws_route_table" "route_table" {
   }
 }
 
-resource "aws_route_table_association" "route_table_assoc" {
+resource aws_route_table_association route_table_assoc {
   subnet_id      = aws_subnet.subnet.id
   route_table_id = aws_route_table.route_table.id
 }
