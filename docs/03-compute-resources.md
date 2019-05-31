@@ -18,6 +18,8 @@ TODO: explain terraform
 
 ### Virtual Private Cloud Network
 
+TODO: Cover terraform network explanation and delete below cli
+
 In this section a dedicated Virtual Private Cloud (VPC) network will be setup to host the Kubernetes cluster.
 
 Create the `kubernetes-the-hard-way` custom VPC:
