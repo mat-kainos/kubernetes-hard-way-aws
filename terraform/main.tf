@@ -4,6 +4,17 @@ terraform {
 
 provider aws {
   region = "eu-west-1"
+  version = "2.12"
 }
 
-provider http {}
+provider http {
+  version = "1.1.1"
+}
+
+provider tls {
+  version = "2.0.1"
+}
+
+provider local {
+  version = "1.2"
+}

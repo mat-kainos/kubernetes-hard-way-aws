@@ -72,8 +72,10 @@ Create EC2 instance which will host the Kubernetes control plane:
 
 ```
 export AMI_ID=`aws ec2 describe-images --owners 099720109477 --filters 'Name=name,Values=ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*' --query 'Images[*].[ImageId,CreationDate]' --output text | sort -k2 -r | head -n1 | cut -f 1`
+
 aws ec2 create-key-pair --key-name kubernetes-the-hard-way --query 'KeyMaterial' --output text > ~/.ssh/kubernetes-the-hard-way.pem
 chmod 400 ~/.ssh/kubernetes-the-hard-way.pem
+
 ssh-add ~/.ssh/kubernetes-the-hard-way.pem >/dev/null
 export MASTER_ID=`aws ec2 run-instances --image-id ${AMI_ID} --count 1 --instance-type t2.small --key-name kubernetes-the-hard-way --security-group-ids ${securityGroupId} --subnet-id ${subnetId} --private-ip-address 10.0.10.11 --associate-public-ip-address --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=controller}]' --query 'Instances[*].InstanceId' --output text`
 export MASTER_EXT_IP=`aws ec2 describe-instances --instance-ids ${MASTER_ID} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text`

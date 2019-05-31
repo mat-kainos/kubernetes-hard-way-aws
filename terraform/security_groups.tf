@@ -16,7 +16,3 @@ resource aws_security_group_rule allow_all_my_cidr_and_internal {
   cidr_blocks = ["${chomp(data.http.my_ip.body)}/32", var.network["vpc_cidr_block"]]
   security_group_id = aws_security_group.sec_group.id
 }
-
-output security_group_my_cidr_block {
-  value = "${chomp(data.http.my_ip.body)}/32"
-}
