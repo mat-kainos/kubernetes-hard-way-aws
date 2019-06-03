@@ -30,3 +30,7 @@ override.tf.json
 
 # Auto generated private key
 ssh_ec2_key.pem
+
+# Auto generated host inventory 
+hosts
+*.retry
