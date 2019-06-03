@@ -6,7 +6,7 @@ data "template_file" "inventory" {
         kthw-controller_private_ip = "${aws_instance.ec2[0].private_ip}"
         kthw-worker-1_public_ip = "${aws_instance.ec2[0].public_ip}"
         kthw-worker-1_private_ip = "${aws_instance.ec2[0].private_ip}"
-        key_path = "${var.private_key_file_name}"
+        key_path = "${path.cwd}/${var.private_key_file_name}"
     }
 }
 
