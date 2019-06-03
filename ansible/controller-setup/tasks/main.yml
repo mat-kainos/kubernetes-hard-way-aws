@@ -1,0 +1,5 @@
+---
+# tasks file for controller-setup
+- name: "Setup correct hostname"
+  hostname: 
+    name: "{{ host_name }}"

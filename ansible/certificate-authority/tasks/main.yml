@@ -1,18 +1,53 @@
 ---
 # tasks file for certificate-authority
 
+# Checks if output files exist, if at least one is missing it generates everything from scratch
+- name: Check that the ca-key.pem exists
+  stat:
+    path: "{{ cert_dir }}/ca-key.pem"
+  register: ca_key_stat
+- debug:
+    msg: System {{ ca_key_stat }}
+
+- name: Check that the ca.csr exists
+  stat:
+    path: "{{ cert_dir }}/ca.csr"
+  register: ca_csr_stat
+- debug:
+    msg: System {{ ca_csr_stat }}
+
+- name: Check that the ca.pem exists
+  stat:
+    path: "{{ cert_dir  + '/ca.pem' }}"
+  register: ca_pem_stat
+
+- name: Check that worker-key.pem exists
+  stat:
+    path: "{{ cert_dir }}/worker-key.pem"
+  register: worker_key_pem_stat
+
+- name: Check that the worker.pem exists
+  stat:
+    path: "{{ cert_dir }}/worker.pem"
+  register: worker_pem_stat
+
+
+# Generates ca-key.pem, ca.csr and ca.pem in {{ cert_dir }}
 - name: Create ca certificate and private key locally
   shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
   args: 
-    chdir: certificate-authority/files
-  register: test
+    chdir: "{{ cert_dir }}"
+  when: not ca_key_stat.stat.exists or not ca_csr_stat.stat.exists or not ca_pem_stat.stat.exists
 
-- debug: msg="{{ test.stdout }}"
-
-- name: Get worker private
-  shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+# Generates worker-key.pem and worker.pem
+- name: Create kube client certificate
+  shell: cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -hostname=worker,{{ worker_ext_ip }},{{ worker_priv_ip }} \
+        -profile=kubernetes \
+        worker-csr.json | cfssljson -bare worker
   args: 
-    chdir: certificate-authority/files
-  register: test
-
-- debug: msg="{{ test.stdout }}"
+    chdir: "{{ cert_dir }}"
+  when: not worker_key_pem_stat.stat.exists or not worker_pem_stat.stat.exists
