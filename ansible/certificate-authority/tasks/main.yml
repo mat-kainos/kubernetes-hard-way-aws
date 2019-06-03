@@ -1,2 +1,18 @@
 ---
 # tasks file for certificate-authority
+
+- name: Create ca certificate and private key locally
+  shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  args: 
+    chdir: certificate-authority/files
+  register: test
+
+- debug: msg="{{ test.stdout }}"
+
+- name: Get worker private
+  shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  args: 
+    chdir: certificate-authority/files
+  register: test
+
+- debug: msg="{{ test.stdout }}"

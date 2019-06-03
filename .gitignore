@@ -34,3 +34,7 @@ ssh_ec2_key.pem
 # Auto generated host inventory 
 hosts
 *.retry
+
+# Cert ignore
+*.pem
+*.csr
