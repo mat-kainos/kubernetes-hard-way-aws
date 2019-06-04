@@ -4,90 +4,90 @@
 # Checks if output files exist, if at least one is missing it generates everything from scratch
 - name: Check that the ca-key.pem exists
   stat:
-    path: "{{ cert_dir }}/ca-key.pem"
+    path: "{{ output_dir }}/ca-key.pem"
   register: ca_key_stat
 
 - name: Check that the ca.csr exists
   stat:
-    path: "{{ cert_dir }}/ca.csr"
+    path: "{{ output_dir }}/ca.csr"
   register: ca_csr_stat
 
 - name: Check that the ca.pem exists
   stat:
-    path: "{{ cert_dir  + '/ca.pem' }}"
+    path: "{{ output_dir }}/ca.pem"
   register: ca_pem_stat
 
 - name: Check that worker-key.pem exists
   stat:
-    path: "{{ cert_dir }}/worker-key.pem"
+    path: "{{ output_dir }}/worker-key.pem"
   register: worker_key_pem_stat
 
 - name: Check that the worker.pem exists
   stat:
-    path: "{{ cert_dir }}/worker.pem"
+    path: "{{ output_dir }}/worker.pem"
   register: worker_pem_stat
 
 - name: Check that the kube-proxy-key.pem exists
   stat:
-    path: "{{ cert_dir }}/kube-proxy-key.pem"
+    path: "{{ output_dir }}/kube-proxy-key.pem"
   register: kube_proxy_key_pem_stat
 
 - name: Check that the kube-proxy.pem exists
   stat:
-    path: "{{ cert_dir }}/kube-proxy.pem"
+    path: "{{ output_dir }}/kube-proxy.pem"
   register: kube_proxy_pem_stat
 
 - name: Check that the kubernetes.pem exists
   stat:
-    path: "{{ cert_dir }}/kubernetes.pem"
+    path: "{{ output_dir }}/kubernetes.pem"
   register: kubernetes_pem_stat
 
 - name: Check that the kubernetes-key.pem exists
   stat:
-    path: "{{ cert_dir }}/kubernetes-key.pem"
+    path: "{{ output_dir }}/kubernetes-key.pem"
   register: kubernetes_key_pem_stat
 
-# Generates ca-key.pem, ca.csr and ca.pem in {{ cert_dir }}
+# Generates ca-key.pem, ca.csr and ca.pem
 - name: Create ca certificate and private key locally
-  shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  shell: cfssl gencert -initca ca-csr.json | cfssljson -bare "{{ output_dir }}/ca"
   args: 
-    chdir: "{{ cert_dir }}"
+    chdir: "{{ input_dir }}"
   when: not ca_key_stat.stat.exists or not ca_csr_stat.stat.exists or not ca_pem_stat.stat.exists
 
 # Generates worker-key.pem and worker.pem
 - name: Create kube client certificate and private key
   shell: cfssl gencert \
-        -ca=ca.pem \
-        -ca-key=ca-key.pem \
+        -ca={{ output_dir }}/ca.pem \
+        -ca-key={{ output_dir }}/ca-key.pem \
         -config=ca-config.json \
         -hostname=worker,{{ worker_ext_ip }},{{ worker_priv_ip }} \
         -profile=kubernetes \
-        worker-csr.json | cfssljson -bare worker
+        worker-csr.json | cfssljson -bare "{{ output_dir }}/worker"
   args: 
-    chdir: "{{ cert_dir }}"
+    chdir: "{{ input_dir }}"
   when: not worker_key_pem_stat.stat.exists or not worker_pem_stat.stat.exists
 
 # Generates kube-proxy-key.pem and kube-proxy.pem
 - name: Create kube proxy client certificate and private key
   shell: cfssl gencert \
-        -ca=ca.pem \
-        -ca-key=ca-key.pem \
+        -ca={{ output_dir }}/ca.pem \
+        -ca-key={{ output_dir }}/ca-key.pem \
         -config=ca-config.json \
         -profile=kubernetes \
-        kube-proxy-csr.json | cfssljson -bare kube-proxy
+        kube-proxy-csr.json | cfssljson -bare "{{ output_dir }}/kube-proxy"
   args: 
-    chdir: "{{ cert_dir }}"
+    chdir: "{{ input_dir }}"
   when: not kube_proxy_key_pem_stat.stat.exists or not kube_proxy_pem_stat.stat.exists
 
 # Generates kubernetes-key.pem and kubernetes.pem
 - name: Create kube api server certificate and private key
   shell: cfssl gencert \
-        -ca=ca.pem \
-        -ca-key=ca-key.pem \
+        -ca={{ output_dir }}/ca.pem \
+        -ca-key={{ output_dir }}/ca-key.pem \
         -config=ca-config.json \
         -hostname={{ master_priv_ip }},127.0.0.1,kubernetes.default \
         -profile=kubernetes \
-        kubernetes-csr.json | cfssljson -bare kubernetes
+        kubernetes-csr.json | cfssljson -bare "{{ output_dir }}/kubernetes"
   args: 
-    chdir: "{{ cert_dir }}"
+    chdir: "{{ input_dir }}"
   when: not kubernetes_key_pem_stat.stat.exists or not kubernetes_pem_stat.stat.exists

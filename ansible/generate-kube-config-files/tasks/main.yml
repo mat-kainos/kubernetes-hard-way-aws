@@ -1,0 +1,14 @@
+---
+# tasks file for generate-kube-config-files
+
+
+# Checks if output files exist, if at least one is missing it generates everything from scratch
+
+- name: Set cluster context in worker.kubeconfig
+  shell: kubectl config set-cluster kubernetes-the-hard-way \
+        --certificate-authority=ca.pem \
+        --embed-certs=true \
+        --server=https://{{ master_priv_ip }}:6443 \
+        --kubeconfig=worker.kubeconfig
+  args: 
+    chdir: "{{ config_dir }}"

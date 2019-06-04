@@ -11,3 +11,4 @@
     - { src: '{{ cert_dir }}/ca.pem', dest: '/' }
     - { src: '{{ cert_dir }}/worker-key.pem', dest: '/' }
     - { src: '{{ cert_dir }}/worker.pem', dest: '/' }
+
