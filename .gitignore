@@ -38,3 +38,8 @@ hosts
 # Cert ignore
 *.pem
 *.csr
+
+# Ignore any sensitive info
+*.sensitive
+encryption-config.yaml
+*.kubeconfig

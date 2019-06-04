@@ -91,3 +91,20 @@
   args: 
     chdir: "{{ input_dir }}"
   when: not kubernetes_key_pem_stat.stat.exists or not kubernetes_pem_stat.stat.exists
+
+
+- name: Ansible create file with content example
+  copy:
+    dest: "{{ output_dir }}/password.sensitive"
+    content: |
+      kind: EncryptionConfig
+      apiVersion: v1
+      resources:
+        - resources:
+            - secrets
+          providers:
+            - aescbc:
+                keys:
+                  - name: key1
+                    secret: ${ENCRYPTION_KEY}
+            - identity: {}
