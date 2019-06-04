@@ -8,3 +8,4 @@
       cert_dir: "{{ playbook_dir }}/certificate-authority/files"
       worker_ext_ip: groups['kthw-worker-1'][0]
       worker_priv_ip: groups['kthw-worker-1-priv'][0]
+      master_priv_ip: groups['kthw-controller-priv'][0]

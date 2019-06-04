@@ -1,0 +1,2 @@
+---
+# Checks if output files exist, if at least one is missing it generates everything from scratch

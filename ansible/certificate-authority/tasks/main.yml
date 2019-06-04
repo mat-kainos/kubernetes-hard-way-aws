@@ -37,6 +37,15 @@
     path: "{{ cert_dir }}/kube-proxy.pem"
   register: kube_proxy_pem_stat
 
+- name: Check that the kubernetes.pem exists
+  stat:
+    path: "{{ cert_dir }}/kubernetes.pem"
+  register: kubernetes_pem_stat
+
+- name: Check that the kubernetes-key.pem exists
+  stat:
+    path: "{{ cert_dir }}/kubernetes-key.pem"
+  register: kubernetes_key_pem_stat
 
 # Generates ca-key.pem, ca.csr and ca.pem in {{ cert_dir }}
 - name: Create ca certificate and private key locally
@@ -58,7 +67,7 @@
     chdir: "{{ cert_dir }}"
   when: not worker_key_pem_stat.stat.exists or not worker_pem_stat.stat.exists
 
-
+# Generates kube-proxy-key.pem and kube-proxy.pem
 - name: Create kube proxy client certificate and private key
   shell: cfssl gencert \
         -ca=ca.pem \
@@ -69,3 +78,17 @@
   args: 
     chdir: "{{ cert_dir }}"
   when: not kube_proxy_key_pem_stat.stat.exists or not kube_proxy_pem_stat.stat.exists
+
+# Generates kubernetes-key.pem and kubernetes.pem
+- name: Create kube api server certificate and private key
+  shell: cfssl gencert \
+        -ca=ca.pem \
+        -ca-key=ca-key.pem \
+        -config=ca-config.json \
+        -hostname={{ master_priv_ip }},127.0.0.1,kubernetes.default \
+        -profile=kubernetes \
+        kubernetes-csr.json | cfssljson -bare kubernetes
+  args: 
+    chdir: "{{ cert_dir }}"
+  when: not kubernetes_key_pem_stat.stat.exists or not kubernetes_pem_stat.stat.exists
+
