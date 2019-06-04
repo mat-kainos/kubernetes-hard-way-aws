@@ -1,9 +1,9 @@
 
 ---
-- hosts: kthw-controller
+- hosts: kthw-worker-1
   gather_facts: true
   become: yes
   roles:
-    - role: controller-setup
-      host_name: master
+    - role: worker-setup
+      host_name: worker
       cert_dir: "{{ playbook_dir }}/certificate-authority/files"

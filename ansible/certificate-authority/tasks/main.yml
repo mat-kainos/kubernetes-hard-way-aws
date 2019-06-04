@@ -91,4 +91,3 @@
   args: 
     chdir: "{{ cert_dir }}"
   when: not kubernetes_key_pem_stat.stat.exists or not kubernetes_pem_stat.stat.exists
-

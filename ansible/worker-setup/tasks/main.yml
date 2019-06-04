@@ -1,2 +1,13 @@
 ---
 # tasks file for worker-setup
+
+- name: Setup correct hostname
+  hostname: 
+    name: "{{ host_name }}"
+
+- name: Copy certificates and private keys to the worker
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '{{ cert_dir }}/ca.pem', dest: '/' }
+    - { src: '{{ cert_dir }}/worker-key.pem', dest: '/' }
+    - { src: '{{ cert_dir }}/worker.pem', dest: '/' }
