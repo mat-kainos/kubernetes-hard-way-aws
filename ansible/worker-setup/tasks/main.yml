@@ -8,7 +8,10 @@
 - name: Copy certificates and private keys to the worker
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
-    - { src: '{{ cert_dir }}/ca.pem', dest: '/' }
-    - { src: '{{ cert_dir }}/worker-key.pem', dest: '/' }
-    - { src: '{{ cert_dir }}/worker.pem', dest: '/' }
+    - { src: '{{ output_dir }}/ca.pem', dest: '/' }
+    - { src: '{{ output_dir }}/worker-key.pem', dest: '/' }
+    - { src: '{{ output_dir }}/worker.pem', dest: '/' }
+    - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/' }
+    - { src: '{{ output_dir }}/kube-proxy.kubeconfig', dest: '/' }
+     
 

@@ -7,6 +7,6 @@
 - name: Copy certificates and private keys to the controller
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
-    - { src: '{{ cert_dir }}/ca.pem', dest: '/' }
-    - { src: '{{ cert_dir }}/kubernetes-key.pem', dest: '/' }
-    - { src: '{{ cert_dir }}/kubernetes.pem', dest: '/' }
+    - { src: '{{ output_dir }}/ca.pem', dest: '/' }
+    - { src: '{{ output_dir }}/kubernetes-key.pem', dest: '/' }
+    - { src: '{{ output_dir }}/kubernetes.pem', dest: '/' }

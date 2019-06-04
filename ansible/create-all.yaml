@@ -4,10 +4,21 @@
   connection: local
   roles:
     - role: certificate-authority
-      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
+      input_dir: "{{ playbook_dir }}/input_files"
+      output_dir: "{{ playbook_dir }}/output_files"
       worker_ext_ip: groups['kthw-worker-1'][0]
       worker_priv_ip: groups['kthw-worker-1-priv'][0]
       master_priv_ip: groups['kthw-controller-priv'][0]
+
+- hosts: local
+  gather_facts: false
+  become: no
+  connection: local
+  roles:
+    - role: generate-kube-config-files
+      master_priv_ip: groups['kthw-controller-priv'][0]
+      input_dir: "{{ playbook_dir }}/input_files"
+      output_dir: "{{ playbook_dir }}/output_files"
 
 - hosts: kthw-worker-1
   gather_facts: false
@@ -15,7 +26,7 @@
   roles:
     - role: worker-setup
       host_name: worker
-      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
+      output_dir: "{{ playbook_dir }}/output_files"
 
 - hosts: kthw-controller
   gather_facts: false
@@ -23,4 +34,4 @@
   roles:
     - role: controller-setup
       host_name: master
-      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
+      output_dir: "{{ playbook_dir }}/output_files"
