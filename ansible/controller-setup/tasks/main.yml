@@ -93,8 +93,6 @@
 
 
 - name: Download kubernetes binaries
-  tags:
-    - current
   get_url:
     url: "{{ item }}"
     dest: /
@@ -107,8 +105,6 @@
 
 
 - name: Copy kubernetes execs to bin folder
-  tags:
-    - current
   copy: 
     src: "/{{ item }}"
     dest: /usr/local/bin/
