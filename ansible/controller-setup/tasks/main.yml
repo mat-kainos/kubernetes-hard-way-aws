@@ -5,16 +5,84 @@
     name: "{{ host_name }}"
 
 - name: Copy certificates, private keys and secret to the controller
-  copy: src={{ item.src }} dest={{ item.dest }}
+  copy: src={{ item }} dest=/
   with_items:
-    - { src: '{{ output_dir }}/ca.pem', dest: '/' }
-    - { src: '{{ output_dir }}/kubernetes-key.pem', dest: '/' }
-    - { src: '{{ output_dir }}/kubernetes.pem', dest: '/' }
-    - { src: '{{ output_dir }}/encryption-config.yaml', dest: '/' }
+    - '{{ output_dir }}/ca.pem'
+    - '{{ output_dir }}/kubernetes-key.pem'
+    - '{{ output_dir }}/kubernetes.pem'
+    - '{{ output_dir }}/encryption-config.yaml'
 
 
 - name: Download and unarchive etcd 3.3.13
   unarchive:
-    src: https://github.com/coreos/etcd/releases/download/v3.3.4/etcd-v3.3.4-linux-amd64.tar.gz
+    src: https://github.com/coreos/etcd/releases/download/v3.3.13/etcd-v3.3.13-linux-amd64.tar.gz
     dest: /
     remote_src: yes
+
+- name: Copy etcd execs to bin folder
+  copy: 
+    src: /etcd-v3.3.13-linux-amd64/{{ item }} 
+    dest: /usr/local/bin/
+    mode: '+x'
+    remote_src: yes
+  with_items:
+    - etcd
+    - etcdctl
+
+- name: Create etcd directories
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/etcd
+    - /var/lib/etcd
+
+- name: Copy ca and kube keys to etcd
+  copy: src={{ item}} dest=/etc/etcd/
+  with_items:
+    - '{{ output_dir }}/ca.pem'
+    - '{{ output_dir }}/kubernetes-key.pem'
+    - '{{ output_dir }}/kubernetes.pem'
+
+
+- name: Create etcd systemd service unit file
+  copy:
+    dest: "/etc/systemd/system/etcd.service"
+    content: |
+        [Unit]
+        Description=etcd
+        Documentation=https://github.com/coreos
+
+        [Service]
+        ExecStart=/usr/local/bin/etcd \
+            --name {{ host_name }} \
+            --cert-file=/etc/etcd/kubernetes.pem \
+            --key-file=/etc/etcd/kubernetes-key.pem \
+            --peer-cert-file=/etc/etcd/kubernetes.pem \
+            --peer-key-file=/etc/etcd/kubernetes-key.pem \
+            --trusted-ca-file=/etc/etcd/ca.pem \
+            --peer-trusted-ca-file=/etc/etcd/ca.pem \
+            --peer-client-cert-auth \
+            --client-cert-auth \
+            --initial-advertise-peer-urls https://{{ master_priv_ip }}:2380 \
+            --listen-peer-urls https://{{ master_priv_ip }}:2380 \
+            --listen-client-urls https://{{ master_priv_ip }}:2379,http://127.0.0.1:2379 \
+            --advertise-client-urls https://{{ master_priv_ip }}:2379 \
+            --initial-cluster-token etcd-cluster-0 \
+            --initial-cluster $ETCD_NAME=https://{{ master_priv_ip }}:2380 \
+            --initial-cluster-state new \
+            --data-dir=/var/lib/etcd 
+        Restart=on-failure 
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+
+- name: Start and enable service etcd
+  tags: 
+    - current
+  systemd:
+    name: etcd
+    state: started
+    enabled: yes
+    daemon_reload: yes

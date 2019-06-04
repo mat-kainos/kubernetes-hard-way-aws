@@ -1,9 +1,8 @@
-- hosts: local
+- hosts: kthw-controller
   gather_facts: false
-  become: no
-  connection: local
+  become: yes
   roles:
-    - role: generate-kube-config-files
-      master_priv_ip: groups['kthw-controller-priv'][0]
-      input_dir: "{{ playbook_dir }}/input_files"
+    - role: controller-setup
+      host_name: master
       output_dir: "{{ playbook_dir }}/output_files"
+      master_priv_ip: "{{ groups['kthw-controller-priv'][0] }}"
