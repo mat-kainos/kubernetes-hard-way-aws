@@ -3,3 +3,10 @@
 - name: Setup correct hostname
   hostname: 
     name: "{{ host_name }}"
+
+- name: Copy certificates and private keys to the controller
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '{{ cert_dir }}/ca.pem', dest: '/' }
+    - { src: '{{ cert_dir }}/kubernetes-key.pem', dest: '/' }
+    - { src: '{{ cert_dir }}/kubernetes.pem', dest: '/' }

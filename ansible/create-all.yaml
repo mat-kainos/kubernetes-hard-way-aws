@@ -1,0 +1,26 @@
+---
+- hosts: local
+  gather_facts: false
+  connection: local
+  roles:
+    - role: certificate-authority
+      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
+      worker_ext_ip: groups['kthw-worker-1'][0]
+      worker_priv_ip: groups['kthw-worker-1-priv'][0]
+      master_priv_ip: groups['kthw-controller-priv'][0]
+
+- hosts: kthw-worker-1
+  gather_facts: false
+  become: yes
+  roles:
+    - role: worker-setup
+      host_name: worker
+      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
+
+- hosts: kthw-controller
+  gather_facts: false
+  become: yes
+  roles:
+    - role: controller-setup
+      host_name: master
+      cert_dir: "{{ playbook_dir }}/certificate-authority/files"
