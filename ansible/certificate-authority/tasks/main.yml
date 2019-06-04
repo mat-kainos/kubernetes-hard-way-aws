@@ -93,9 +93,9 @@
   when: not kubernetes_key_pem_stat.stat.exists or not kubernetes_pem_stat.stat.exists
 
 
-- name: Ansible create file with content example
+- name: Create encryption-config.yaml and supporting password.sensitive
   copy:
-    dest: "{{ output_dir }}/password.sensitive"
+    dest: "{{ output_dir }}/encryption-config.yaml"
     content: |
       kind: EncryptionConfig
       apiVersion: v1
@@ -106,5 +106,5 @@
             - aescbc:
                 keys:
                   - name: key1
-                    secret: ${ENCRYPTION_KEY}
+                    secret: {{ lookup('password', '{{ output_dir}}/password.sensitive length=32 chars=ascii_letters') | b64encode }}
             - identity: {}

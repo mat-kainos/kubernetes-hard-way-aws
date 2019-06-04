@@ -4,9 +4,17 @@
   hostname: 
     name: "{{ host_name }}"
 
-- name: Copy certificates and private keys to the controller
+- name: Copy certificates, private keys and secret to the controller
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
     - { src: '{{ output_dir }}/ca.pem', dest: '/' }
     - { src: '{{ output_dir }}/kubernetes-key.pem', dest: '/' }
     - { src: '{{ output_dir }}/kubernetes.pem', dest: '/' }
+    - { src: '{{ output_dir }}/encryption-config.yaml', dest: '/' }
+
+
+- name: Download and unarchive etcd 3.3.13
+  unarchive:
+    src: https://github.com/coreos/etcd/releases/download/v3.3.4/etcd-v3.3.4-linux-amd64.tar.gz
+    dest: /
+    remote_src: yes
