@@ -222,8 +222,6 @@
     daemon_reload: yes
 
 - name: Create kube scheduler systemd service unit file
-  tags:
-    - current
   copy:
     dest: "/etc/systemd/system/kube-scheduler.service"
     content: |
@@ -243,19 +241,9 @@
         WantedBy=multi-user.target
 
 
-- name: Start and enable service kube-scheduler
-  systemd:
-    name: kube-scheduler
-    state: started
-    enabled: yes
-    daemon_reload: yes
-
-- name: Create rbac role and binding
+- name: Apply rbac role and binding
   tags:
     - current
-  k8s:
-    ca_cert: /var/lib/kubernetes/ca.pem
-    client_cert: /var/lib/kubernetes/kubernetes.pem
-    client_key: /var/lib/kubernetes/kubernetes-key.pem 
-    state: present
-    src: /var/lib/kubernetes/rbac.yaml
+  shell: kubectl apply -f rbac.yaml
+  args:
+    chdir: /var/lib/kubernetes/
