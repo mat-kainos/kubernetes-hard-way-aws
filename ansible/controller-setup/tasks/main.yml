@@ -4,10 +4,14 @@
   hostname: 
     name: "{{ host_name }}"
 
-- name: Update repositories cache and install "unzip" package
+- name: Update repositories cache then install unzip and python3-pip
   apt:
-    name: unzip
+    name: ['unzip', 'python3-pip']
     update_cache: yes
+
+- name: Install OpenShift Python client for k8s ansible module
+  pip:
+    name: openshift
 
 - name: Copy certificates, private keys and secret to the controller
   copy: src={{ item }} dest=/var/lib/kubernetes/
@@ -17,6 +21,7 @@
     - '{{ output_dir }}/kubernetes-key.pem'
     - '{{ output_dir }}/kubernetes.pem'
     - '{{ output_dir }}/encryption-config.yaml'
+    - '{{ input_dir }}/rbac.yaml'
 
 
 - name: Download and unarchive etcd 3.3.13
@@ -122,19 +127,14 @@
   local_action: shell terraform output subnet_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_subnet_cidr
-  tags:
-    - current
 
 - name: Grabbing vpc cidr from local terraform output
   local_action: shell terraform output vpc_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_vpc_cidr
-  tags:
-    - current
+
 
 - name: Create kube-apiserver systemd service unit file
-  tags:
-    - current
   copy:
     dest: "/etc/systemd/system/kube-apiserver.service"
     content: |
@@ -181,8 +181,6 @@
         WantedBy=multi-user.target
 
 - name: Start and enable service kube-apiserver
-  tags:
-    - current
   systemd:
     name: kube-apiserver
     state: started
@@ -190,8 +188,6 @@
     daemon_reload: yes
 
 - name: Create kube controller manager systemd service unit file
-  tags:
-    - current
   copy:
     dest: "/etc/systemd/system/kube-controller-manager.service"
     content: |
@@ -253,3 +249,13 @@
     state: started
     enabled: yes
     daemon_reload: yes
+
+- name: Create rbac role and binding
+  tags:
+    - current
+  k8s:
+    ca_cert: /var/lib/kubernetes/ca.pem
+    client_cert: /var/lib/kubernetes/kubernetes.pem
+    client_key: /var/lib/kubernetes/kubernetes-key.pem 
+    state: present
+    src: /var/lib/kubernetes/rbac.yaml

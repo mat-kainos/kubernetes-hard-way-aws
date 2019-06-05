@@ -24,5 +24,6 @@
   roles:
     - role: controller-setup
       host_name: master
+      input_dir: "{{ playbook_dir }}/input_files"
       output_dir: "{{ playbook_dir }}/output_files"
       master_priv_ip: "{{ groups['kthw-controller-priv'][0] }}"
