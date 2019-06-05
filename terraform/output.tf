@@ -6,6 +6,9 @@ output subnet_cidr {
   value = var.network.subnet_cidr_block
 }
 
+output vpc_cidr {
+  value = var.network.vpc_cidr_block
+}
 
 output ec2_connection_strings {
   value = "${formatlist(

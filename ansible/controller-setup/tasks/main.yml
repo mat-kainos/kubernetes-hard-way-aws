@@ -10,9 +10,10 @@
     update_cache: yes
 
 - name: Copy certificates, private keys and secret to the controller
-  copy: src={{ item }} dest=/
+  copy: src={{ item }} dest=/var/lib/kubernetes/
   with_items:
     - '{{ output_dir }}/ca.pem'
+    - '{{ output_dir }}/ca-key.pem'
     - '{{ output_dir }}/kubernetes-key.pem'
     - '{{ output_dir }}/kubernetes.pem'
     - '{{ output_dir }}/encryption-config.yaml'
@@ -124,6 +125,13 @@
   tags:
     - current
 
+- name: Grabbing vpc cidr from local terraform output
+  local_action: shell terraform output vpc_cidr chdir="{{ playbook_dir }}/../terraform"
+  become: no
+  register: terraform_vpc_cidr
+  tags:
+    - current
+
 - name: Create kube-apiserver systemd service unit file
   tags:
     - current
@@ -136,7 +144,7 @@
 
         [Service]
         ExecStart=/usr/local/bin/kube-apiserver \
-        --admission-control=Initializers,NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+        --admission-control=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
         --advertise-address={{ master_priv_ip }} \
         --allow-privileged=true \
         --apiserver-count=3 \
@@ -163,7 +171,6 @@
         --service-account-key-file=/var/lib/kubernetes/ca-key.pem \
         --service-cluster-ip-range={{ terraform_subnet_cidr.stdout }} \
         --service-node-port-range=30000-32767 \
-        --tls-ca-file=/var/lib/kubernetes/ca.pem \
         --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \
         --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem \
         --v=2
@@ -172,3 +179,77 @@
 
         [Install]
         WantedBy=multi-user.target
+
+- name: Start and enable service kube-apiserver
+  tags:
+    - current
+  systemd:
+    name: kube-apiserver
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Create kube controller manager systemd service unit file
+  tags:
+    - current
+  copy:
+    dest: "/etc/systemd/system/kube-controller-manager.service"
+    content: |
+        [Unit]
+        Description=Kubernetes Controller Manager
+        Documentation=https://github.com/kubernetes/kubernetes
+
+        [Service]
+        ExecStart=/usr/local/bin/kube-controller-manager \
+        --address=0.0.0.0 \
+        --cluster-cidr={{ terraform_vpc_cidr.stdout }} \
+        --cluster-name=kubernetes \
+        --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \
+        --cluster-signing-key-file=/var/lib/kubernetes/ca-key.pem \
+        --leader-elect=true \
+        --master=http://127.0.0.1:8080 \
+        --root-ca-file=/var/lib/kubernetes/ca.pem \
+        --service-account-private-key-file=/var/lib/kubernetes/ca-key.pem \
+        --service-cluster-ip-range={{ terraform_subnet_cidr.stdout }} \
+        --v=2
+        Restart=on-failure
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+
+- name: Start and enable service kube-controller-manager
+  systemd:
+    name: kube-controller-manager
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
+- name: Create kube scheduler systemd service unit file
+  tags:
+    - current
+  copy:
+    dest: "/etc/systemd/system/kube-scheduler.service"
+    content: |
+        [Unit]
+        Description=Kubernetes Scheduler
+        Documentation=https://github.com/kubernetes/kubernetes
+
+        [Service]
+        ExecStart=/usr/local/bin/kube-scheduler \
+        --leader-elect=true \
+        --master=http://127.0.0.1:8080 \
+        --v=2
+        Restart=on-failure
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+
+
+- name: Start and enable service kube-scheduler
+  systemd:
+    name: kube-scheduler
+    state: started
+    enabled: yes
+    daemon_reload: yes
