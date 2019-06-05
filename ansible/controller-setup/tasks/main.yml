@@ -56,38 +56,10 @@
     - '{{ output_dir }}/kubernetes.pem'
 
 
-- name: Create etcd systemd service unit file
-  copy:
-    dest: "/etc/systemd/system/etcd.service"
-    content: |
-        [Unit]
-        Description=etcd
-        Documentation=https://github.com/coreos
-
-        [Service]
-        ExecStart=/usr/local/bin/etcd \
-            --name {{ host_name }} \
-            --cert-file=/etc/etcd/kubernetes.pem \
-            --key-file=/etc/etcd/kubernetes-key.pem \
-            --peer-cert-file=/etc/etcd/kubernetes.pem \
-            --peer-key-file=/etc/etcd/kubernetes-key.pem \
-            --trusted-ca-file=/etc/etcd/ca.pem \
-            --peer-trusted-ca-file=/etc/etcd/ca.pem \
-            --peer-client-cert-auth \
-            --client-cert-auth \
-            --initial-advertise-peer-urls https://{{ master_priv_ip }}:2380 \
-            --listen-peer-urls https://{{ master_priv_ip }}:2380 \
-            --listen-client-urls https://{{ master_priv_ip }}:2379,http://127.0.0.1:2379 \
-            --advertise-client-urls https://{{ master_priv_ip }}:2379 \
-            --initial-cluster-token etcd-cluster-0 \
-            --initial-cluster {{ host_name }}=https://{{ master_priv_ip }}:2380 \
-            --initial-cluster-state new \
-            --data-dir=/var/lib/etcd 
-        Restart=on-failure 
-        RestartSec=5
-
-        [Install]
-        WantedBy=multi-user.target
+- name: Template and copy etcd systemd service unit file
+  template:
+    src: templates/etcd.service.tpl
+    dest: /etc/systemd/system/etcd.service
 
 - name: Start and enable service etcd
   systemd:
@@ -95,7 +67,6 @@
     state: started
     enabled: yes
     daemon_reload: yes
-
 
 
 - name: Download kubernetes controller binaries
@@ -134,51 +105,11 @@
   register: terraform_vpc_cidr
 
 
-- name: Create kube-apiserver systemd service unit file
-  copy:
-    dest: "/etc/systemd/system/kube-apiserver.service"
-    content: |
-        [Unit]
-        Description=Kubernetes API Server
-        Documentation=https://github.com/kubernetes/kubernetes
+- name: Template and copy kube-apiserver systemd service unit file
+  template:
+    src: templates/kube-apiserver.service.tpl
+    dest: /etc/systemd/system/kube-apiserver.service
 
-        [Service]
-        ExecStart=/usr/local/bin/kube-apiserver \
-        --admission-control=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
-        --advertise-address={{ master_priv_ip }} \
-        --allow-privileged=true \
-        --apiserver-count=3 \
-        --audit-log-maxage=30 \
-        --audit-log-maxbackup=3 \
-        --audit-log-maxsize=100 \
-        --audit-log-path=/var/log/audit.log \
-        --authorization-mode=Node,RBAC \
-        --bind-address=0.0.0.0 \
-        --client-ca-file=/var/lib/kubernetes/ca.pem \
-        --enable-swagger-ui=true \
-        --etcd-cafile=/var/lib/kubernetes/ca.pem \
-        --etcd-certfile=/var/lib/kubernetes/kubernetes.pem \
-        --etcd-keyfile=/var/lib/kubernetes/kubernetes-key.pem \
-        --etcd-servers=https://{{ master_priv_ip }}:2379 \
-        --event-ttl=1h \
-        --experimental-encryption-provider-config=/var/lib/kubernetes/encryption-config.yaml \
-        --insecure-bind-address=127.0.0.1 \
-        --kubelet-certificate-authority=/var/lib/kubernetes/ca.pem \
-        --kubelet-client-certificate=/var/lib/kubernetes/kubernetes.pem \
-        --kubelet-client-key=/var/lib/kubernetes/kubernetes-key.pem \
-        --kubelet-https=true \
-        --runtime-config=api/all \
-        --service-account-key-file=/var/lib/kubernetes/ca-key.pem \
-        --service-cluster-ip-range={{ terraform_subnet_cidr.stdout }} \
-        --service-node-port-range=30000-32767 \
-        --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \
-        --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem \
-        --v=2
-        Restart=on-failure
-        RestartSec=5
-
-        [Install]
-        WantedBy=multi-user.target
 
 - name: Start and enable service kube-apiserver
   systemd:
@@ -187,32 +118,11 @@
     enabled: yes
     daemon_reload: yes
 
-- name: Create kube controller manager systemd service unit file
-  copy:
-    dest: "/etc/systemd/system/kube-controller-manager.service"
-    content: |
-        [Unit]
-        Description=Kubernetes Controller Manager
-        Documentation=https://github.com/kubernetes/kubernetes
+- name: Template and copy kube controller manager systemd service unit file
+  template:
+    src: templates/kube-controller-manager.service.tpl
+    dest: /etc/systemd/system/kube-controller-manager.service
 
-        [Service]
-        ExecStart=/usr/local/bin/kube-controller-manager \
-        --address=0.0.0.0 \
-        --cluster-cidr={{ terraform_vpc_cidr.stdout }} \
-        --cluster-name=kubernetes \
-        --cluster-signing-cert-file=/var/lib/kubernetes/ca.pem \
-        --cluster-signing-key-file=/var/lib/kubernetes/ca-key.pem \
-        --leader-elect=true \
-        --master=http://127.0.0.1:8080 \
-        --root-ca-file=/var/lib/kubernetes/ca.pem \
-        --service-account-private-key-file=/var/lib/kubernetes/ca-key.pem \
-        --service-cluster-ip-range={{ terraform_subnet_cidr.stdout }} \
-        --v=2
-        Restart=on-failure
-        RestartSec=5
-
-        [Install]
-        WantedBy=multi-user.target
 
 - name: Start and enable service kube-controller-manager
   systemd:
@@ -221,25 +131,10 @@
     enabled: yes
     daemon_reload: yes
 
-- name: Create kube scheduler systemd service unit file
-  copy:
-    dest: "/etc/systemd/system/kube-scheduler.service"
-    content: |
-        [Unit]
-        Description=Kubernetes Scheduler
-        Documentation=https://github.com/kubernetes/kubernetes
-
-        [Service]
-        ExecStart=/usr/local/bin/kube-scheduler \
-        --leader-elect=true \
-        --master=http://127.0.0.1:8080 \
-        --v=2
-        Restart=on-failure
-        RestartSec=5
-
-        [Install]
-        WantedBy=multi-user.target
-
+- name: Copy kube scheduler systemd service unit file
+  copy: 
+    src: files/kube-scheduler.service
+    dest: /etc/systemd/system/kube-scheduler.service
 
 - name: Apply rbac role and binding
   shell: kubectl apply -f rbac.yaml
