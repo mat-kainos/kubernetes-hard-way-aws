@@ -123,12 +123,12 @@
     - kubectl
 
 
-- name: Grabbing subnet cidr from local terraform output
+- name: Register subnet cidr from local terraform output
   local_action: shell terraform output subnet_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_subnet_cidr
 
-- name: Grabbing vpc cidr from local terraform output
+- name: Register vpc cidr from local terraform output
   local_action: shell terraform output vpc_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_vpc_cidr

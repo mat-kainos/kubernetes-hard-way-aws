@@ -13,8 +13,6 @@
     update_cache: yes
 
 - name: Create kube and cni directories
-  tags:
-    -  current
   file:
     path: "{{ item }}"
     state: directory
@@ -46,10 +44,18 @@
     - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kube-proxy
     - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kubelet
 
+- name: Copy kubernetes worker binaries to bin folder
+  copy: 
+    src: "/{{ item }}"
+    dest: /usr/local/bin/
+    mode: '+x'
+    remote_src: yes
+  with_items:
+    - kube-proxy
+    - kubectl
+    - kubelet
 
 - name: Download and unarchive cni and containerd
-  tags:
-    -  current
   unarchive:
     src: "{{ item.src }}"
     dest: "{{ item.dst }}"
@@ -57,3 +63,25 @@
   with_items:
     - { src: 'https://github.com/containernetworking/plugins/releases/download/v0.8.0/cni-plugins-linux-amd64-v0.8.0.tgz', dst: '/opt/cni/bin/' }
     - { src: 'https://github.com/containerd/containerd/releases/download/v1.2.6/containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }
+
+
+- name: Register subnet id from local terraform output
+  tags:
+    -  current
+  local_action: shell terraform output subnet_id chdir="{{ playbook_dir }}/../terraform"
+  become: no
+  register: terraform_subnet_id
+
+- name: Template and copy 10-bridge.conf
+  tags:
+    -  current
+  template:
+    src: templates/10-bridge.tpl
+    dest: /etc/cni/net.d/10-bridge.conf
+
+- name: Copy 99-loopback.conf
+  tags:
+    -  current
+  copy: 
+    src: files/99-loopback.conf
+    dest: /etc/cni/net.d/

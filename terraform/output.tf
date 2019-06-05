@@ -6,6 +6,10 @@ output subnet_cidr {
   value = var.network.subnet_cidr_block
 }
 
+output subnet_id {
+  value = aws_subnet.subnet.id
+}
+
 output vpc_cidr {
   value = var.network.vpc_cidr_block
 }
