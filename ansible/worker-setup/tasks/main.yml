@@ -5,6 +5,27 @@
   hostname: 
     name: "{{ host_name }}"
 
+- name: Update repositories cache then install unzip
+  tags:
+    - current
+  apt:
+    name: ['unzip']
+    update_cache: yes
+
+- name: Create kube and cni directories
+  tags:
+    -  current
+  file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+    - /etc/cni/net.d
+    - /opt/cni/bin
+    - /var/lib/kubelet
+    - /var/lib/kube-proxy
+    - /var/lib/kubernetes
+    - /var/run/kubernetes
+
 - name: Copy certificates and private keys to the worker
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
@@ -15,3 +36,24 @@
     - { src: '{{ output_dir }}/kube-proxy.kubeconfig', dest: '/' }
      
 
+- name: Download kubernetes worker binaries
+  get_url:
+    url: "{{ item }}"
+    dest: /
+    remote_src: yes
+  with_items:
+    - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kubectl
+    - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kube-proxy
+    - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kubelet
+
+
+- name: Download and unarchive cni and containerd
+  tags:
+    -  current
+  unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dst }}"
+    remote_src: yes
+  with_items:
+    - { src: 'https://github.com/containernetworking/plugins/releases/download/v0.8.0/cni-plugins-linux-amd64-v0.8.0.tgz', dst: '/opt/cni/bin/' }
+    - { src: 'https://github.com/containerd/containerd/releases/download/v1.2.6/containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }

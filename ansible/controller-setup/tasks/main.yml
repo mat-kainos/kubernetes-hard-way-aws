@@ -98,7 +98,7 @@
 
 
 
-- name: Download kubernetes binaries
+- name: Download kubernetes controller binaries
   get_url:
     url: "{{ item }}"
     dest: /
@@ -242,8 +242,6 @@
 
 
 - name: Apply rbac role and binding
-  tags:
-    - current
   shell: kubectl apply -f rbac.yaml
   args:
     chdir: /var/lib/kubernetes/
