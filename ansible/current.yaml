@@ -1,8 +1,7 @@
-- hosts: kthw-controller
+- hosts: kthw-worker-1
   gather_facts: false
   become: yes
   roles:
-    - role: controller-setup
-      host_name: master
+    - role: worker-setup
+      host_name: worker
       output_dir: "{{ playbook_dir }}/output_files"
-      master_priv_ip: "{{ groups['kthw-controller-priv'][0] }}"

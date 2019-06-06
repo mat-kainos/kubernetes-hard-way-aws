@@ -5,13 +5,13 @@
   hostname: 
     name: "{{ host_name }}"
 
-- name: Apt install unzip
+- name: Apt install dependencies
   tags:
     - current
   apt:
-    name: ['unzip']
+    name: ['unzip', 'socat', 'conntrack', 'ipset']
 
-- name: Create kube and cni directories
+- name: Create kube, containerd and cni directories
   file:
     path: "{{ item }}"
     state: directory
@@ -22,20 +22,20 @@
     - /var/lib/kube-proxy
     - /var/lib/kubernetes
     - /var/run/kubernetes
+    - /etc/containerd
 
 - name: Copy certificates and private keys to the worker
-  tags:
-    - current
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
     - { src: '{{ output_dir }}/ca.pem', dest: '/var/lib/kubernetes' }
     - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/var/lib/kubelet/kubeconfig' }
     - { src: '{{ output_dir }}/worker-key.pem', dest: '/var/lib/kubelet/' }
     - { src: '{{ output_dir }}/worker.pem', dest: '/var/lib/kubelet/' }
-    - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/var/lib/kubelet/kubeconfig' }
     - { src: '{{ output_dir }}/kube-proxy.kubeconfig', dest: '/var/lib/kube-proxy/kubeconfig' }
-    
-    
+    - { src: 'binaries/runsc', dest: '/usr/local/bin/runsc' }
+  
+
+
 - name: Download kubernetes worker binaries
   tags:
     - current
@@ -47,29 +47,32 @@
     - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kubectl
     - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kube-proxy
     - https://storage.googleapis.com/kubernetes-release/release/v1.14.1/bin/linux/amd64/kubelet
+    - https://github.com/opencontainers/runc/releases/download/v1.0.0-rc8/runc.amd64
 
-- name: Copy kubernetes worker binaries to bin folder
-  copy: 
-    src: "/{{ item }}"
-    dest: /usr/local/bin/
-    mode: '+x'
-    remote_src: yes
-  with_items:
-    - kube-proxy
-    - kubectl
-    - kubelet
 
-- name: Download and unarchive cni plugins and containerd
-  tags:
-    - current
+
+- name: Download and unarchive crictl, cni plugins and containerd
   unarchive:
     src: "{{ item.src }}"
     dest: "{{ item.dst }}"
     remote_src: yes
   with_items:
-    - { src: 'https://github.com/containernetworking/plugins/releases/download/v0.8.0/cni-plugins-linux-amd64-v0.8.0.tgz', dst: '/opt/cni/bin/' }
-    - { src: 'https://storage.googleapis.com/cri-containerd-release/cri-containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }
-
+    - { src: 'https://github.com/containerd/containerd/releases/download/v1.2.6/containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }
+    - { src: 'https://github.com/containernetworking/plugins/releases/download/v0.8.1/cni-plugins-linux-amd64-v0.8.1.tgz', dst: '/opt/cni/bin/' }
+    - { src: 'https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.14.0/crictl-v1.14.0-linux-amd64.tar.gz', dst: '/usr/local/bin/' }
+    
+- name: Copy kubernetes worker binaries to bin folder
+  copy: 
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: '+x'
+    remote_src: yes
+  with_items:
+    - { src: '/kube-proxy', dest: '/usr/local/bin/' }
+    - { src: '/kubectl', dest: '/usr/local/bin/' }
+    - { src: '/kubelet', dest: '/usr/local/bin/' }
+    - { src: '/runc.amd64', dest: '/usr/local/bin/runc' }
+  
 
 - name: Register subnet id from local terraform output
   tags:
@@ -78,10 +81,14 @@
   become: no
   register: terraform_subnet_id
 
-
-- name: Register vpc cidr from local terraform output
+- name: Register subnet cidr from local terraform output
   tags:
     -  current
+  local_action: shell terraform output subnet_id chdir="{{ playbook_dir }}/../terraform"
+  become: no
+  register: terraform_subnet_cidr
+
+- name: Register vpc cidr from local terraform output
   local_action: shell terraform output vpc_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_vpc_cidr
@@ -96,16 +103,47 @@
     src: files/99-loopback.conf
     dest: /etc/cni/net.d/
 
+- name: Copy containerd conf
+  copy: 
+    src: files/containerd.config.toml
+    dest: /etc/containerd/config.toml
+
+
+- name: Copy containerd service
+  copy: 
+    src: files/containerd.service
+    dest: /etc/systemd/system/containerd.service
+    
+
 - name: Template and copy kubelet service
   tags:
     -  current
   template:
-    src: templates/kubelet-service.tpl
+    src: templates/kubelet.service.tpl
     dest: /etc/systemd/system/kubelet.service
 
 - name: Template and copy kube proxy service
-  tags:
-    -  current
   template:
     src: templates/kube-proxy.service.tpl
     dest: /etc/systemd/system/kube-proxy.service
+
+- name: Template and copy kubelet config
+  tags:
+    -  current
+  template:
+    src: templates/kubelet-config.yaml.tpl
+    dest: /var/lib/kubelet/kubelet-config.yaml
+
+
+- name: Start and enable containerd, kube proxy and kubelet service
+  tags:
+    -  current
+  systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  with_items:
+    - containerd
+    - kubelet
+    - kube-proxy
