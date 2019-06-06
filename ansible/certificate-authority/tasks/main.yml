@@ -129,7 +129,20 @@
   args: 
     chdir: "{{ output_dir }}"
 
+- name: Set cluster default context in worker.kubeconfig
+  shell: kubectl config set-context default \
+        --cluster=kubernetes-the-hard-way \
+        --user=system:node:worker \
+        --kubeconfig=worker.kubeconfig
+  args: 
+    chdir: "{{ output_dir }}"
 
+- name: Apply default worker context
+  shell: kubectl config use-context default --kubeconfig=worker.kubeconfig
+  args: 
+    chdir: "{{ output_dir }}"
+
+    
 - name: Set cluster context in kube-proxy.kubeconfig
   shell: kubectl config set-cluster kubernetes-the-hard-way \
         --certificate-authority=ca.pem \
@@ -145,5 +158,18 @@
         --client-key=kube-proxy-key.pem \
         --embed-certs=true \
         --kubeconfig=kube-proxy.kubeconfig
+  args: 
+    chdir: "{{ output_dir }}"
+
+- name: Set default cluster context in kube-proxy.kubeconfig
+  shell: kubectl config set-context default \
+        --cluster=kubernetes-the-hard-way \
+        --user=kube-proxy \
+        --kubeconfig=kube-proxy.kubeconfig
+  args: 
+    chdir: "{{ output_dir }}"
+
+- name: Apply default kube-proxy context
+  shell: kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
   args: 
     chdir: "{{ output_dir }}"
