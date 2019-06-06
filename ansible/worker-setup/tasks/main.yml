@@ -5,12 +5,11 @@
   hostname: 
     name: "{{ host_name }}"
 
-- name: Update repositories cache then install unzip
+- name: Apt install unzip
   tags:
     - current
   apt:
     name: ['unzip']
-    update_cache: yes
 
 - name: Create kube and cni directories
   file:
@@ -25,16 +24,21 @@
     - /var/run/kubernetes
 
 - name: Copy certificates and private keys to the worker
+  tags:
+    - current
   copy: src={{ item.src }} dest={{ item.dest }}
   with_items:
-    - { src: '{{ output_dir }}/ca.pem', dest: '/' }
-    - { src: '{{ output_dir }}/worker-key.pem', dest: '/' }
-    - { src: '{{ output_dir }}/worker.pem', dest: '/' }
-    - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/' }
-    - { src: '{{ output_dir }}/kube-proxy.kubeconfig', dest: '/' }
-     
-
+    - { src: '{{ output_dir }}/ca.pem', dest: '/var/lib/kubernetes' }
+    - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/var/lib/kubelet/kubeconfig' }
+    - { src: '{{ output_dir }}/worker-key.pem', dest: '/var/lib/kubelet/' }
+    - { src: '{{ output_dir }}/worker.pem', dest: '/var/lib/kubelet/' }
+    - { src: '{{ output_dir }}/worker.kubeconfig', dest: '/var/lib/kubelet/kubeconfig' }
+    - { src: '{{ output_dir }}/kube-proxy.kubeconfig', dest: '/var/lib/kube-proxy/kubeconfig' }
+    
+    
 - name: Download kubernetes worker binaries
+  tags:
+    - current
   get_url:
     url: "{{ item }}"
     dest: /
@@ -55,14 +59,16 @@
     - kubectl
     - kubelet
 
-- name: Download and unarchive cni and containerd
+- name: Download and unarchive cni plugins and containerd
+  tags:
+    - current
   unarchive:
     src: "{{ item.src }}"
     dest: "{{ item.dst }}"
     remote_src: yes
   with_items:
     - { src: 'https://github.com/containernetworking/plugins/releases/download/v0.8.0/cni-plugins-linux-amd64-v0.8.0.tgz', dst: '/opt/cni/bin/' }
-    - { src: 'https://github.com/containerd/containerd/releases/download/v1.2.6/containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }
+    - { src: 'https://storage.googleapis.com/cri-containerd-release/cri-containerd-1.2.6.linux-amd64.tar.gz', dst: '/' }
 
 
 - name: Register subnet id from local terraform output
@@ -72,16 +78,34 @@
   become: no
   register: terraform_subnet_id
 
-- name: Template and copy 10-bridge.conf
+
+- name: Register vpc cidr from local terraform output
   tags:
     -  current
+  local_action: shell terraform output vpc_cidr chdir="{{ playbook_dir }}/../terraform"
+  become: no
+  register: terraform_vpc_cidr
+
+- name: Template and copy 10-bridge.conf
   template:
     src: templates/10-bridge.tpl
     dest: /etc/cni/net.d/10-bridge.conf
 
 - name: Copy 99-loopback.conf
-  tags:
-    -  current
   copy: 
     src: files/99-loopback.conf
     dest: /etc/cni/net.d/
+
+- name: Template and copy kubelet service
+  tags:
+    -  current
+  template:
+    src: templates/kubelet-service.tpl
+    dest: /etc/systemd/system/kubelet.service
+
+- name: Template and copy kube proxy service
+  tags:
+    -  current
+  template:
+    src: templates/kube-proxy.service.tpl
+    dest: /etc/systemd/system/kube-proxy.service
