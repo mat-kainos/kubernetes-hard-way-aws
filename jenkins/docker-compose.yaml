@@ -1,0 +1,18 @@
+version: '3.7'
+
+services:
+
+  main:
+    image: jenkins/jenkins:2.180-alpine 
+    ports:
+      - 8080:8080
+      - 50000:50000
+    secrets:
+      - jenkins-user
+      - jenkins-pass
+
+secrets:
+  jenkins-user:
+    file: ./user.sensitive
+  jenkins-pass:
+    file: ./pwd.sensitive
