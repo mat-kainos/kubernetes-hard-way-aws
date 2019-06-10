@@ -84,7 +84,7 @@
 - name: Register subnet cidr from local terraform output
   tags:
     -  current
-  local_action: shell terraform output subnet_id chdir="{{ playbook_dir }}/../terraform"
+  local_action: shell terraform output subnet_cidr chdir="{{ playbook_dir }}/../terraform"
   become: no
   register: terraform_subnet_cidr
 

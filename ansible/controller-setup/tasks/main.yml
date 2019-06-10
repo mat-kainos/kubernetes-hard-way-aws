@@ -136,6 +136,14 @@
     src: files/kube-scheduler.service
     dest: /etc/systemd/system/kube-scheduler.service
 
+
+- name: Start and enable service kube-scheduler
+  systemd:
+    name: kube-scheduler
+    state: started
+    enabled: yes
+    daemon_reload: yes
+
 - name: Apply rbac role and binding
   shell: kubectl apply -f rbac.yaml
   args:

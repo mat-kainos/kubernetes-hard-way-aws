@@ -14,7 +14,8 @@ ExecStart=/usr/local/bin/kubelet \
   --network-plugin=cni \
   --register-node=true \
   --cloud-provider= \
-  --v=2
+  --v=2 \
+  --cluster-domain=cluster.local
 Restart=on-failure
 RestartSec=5
 

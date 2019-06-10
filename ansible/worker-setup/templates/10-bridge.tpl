@@ -8,7 +8,7 @@
         "ipam": {
             "type": "host-local",
             "ranges": [
-            [{"subnet": "{{ terraform_subnet_id.stdout }}"}]
+            [{"subnet": "{{ terraform_subnet_cidr.stdout }}"}]
             ],
             "routes": [{"dst": "0.0.0.0/0"}]
         }
