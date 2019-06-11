@@ -20,7 +20,7 @@ email-ext
 emailext-template
 mailer
 ssh
-kubernetes
+kubernetes:1.15.6
 aws-credentials
 amazon-ecr
 windows-azure-storage
